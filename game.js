@@ -18,17 +18,22 @@ const FLOOR_Y = LOGH - 54;     // sol jouable (au-dessus de la bande de rue)
 const GAME_URL = 'https://coaxel2.github.io/course-viralite/';
 const WIN_GOAL = 2000;         // followers à atteindre pour gagner + débloquer le Défi Campagne
 // Classement mondial fictif (temps pour atteindre 2000 followers) — le joueur s'y insère
-const RIVALS = [
-  { name: '@maya.viral',  t: 23.4 },
-  { name: 'ThéoCreates',  t: 26.9 },
-  { name: '@lina.mkg',    t: 30.5 },
-  { name: 'BuzzKevin',    t: 34.2 },
-  { name: '@sofia.trend', t: 37.8 },
-  { name: 'NoaDigital',   t: 41.3 },
-  { name: '@emma.pop',    t: 45.0 },
-  { name: 'LucasOnAir',   t: 48.7 },
-  { name: '@chloé.snap',  t: 52.6 },
+const RIVAL_NAMES = [
+  '@maya.viral', 'ThéoCreates', '@lina.mkg', 'BuzzKevin', '@sofia.trend',
+  'NoaDigital', '@emma.pop', 'LucasOnAir', '@chloé.snap', 'NinaBoost',
+  '@tom.reels', 'InesMotion', '@yanis.live', 'CamilleAds', '@zoe.pixel',
+  'MaxSocial', '@jade.story', 'EliotReach', '@mia.short', 'HugoLaunch',
+  '@lea.flash', 'NolanBuzz', '@iris.media', 'SachaTrend', '@ana.feed',
+  'RobinViral', '@enzo.clip', 'LouCampaign', '@malo.pop', 'LénaFlow',
+  '@paul.loop', 'SarahViews', '@adam.like', 'EvaSignal', '@noe.social',
+  'JulieSpark', '@axel.reach', 'MilaWave', '@liam.posts', 'RoseImpact',
+  '@tess.digital', 'SamCreator', '@ines.reach', 'LeoTarget', '@clara.pub',
+  'MaelStudio', '@nora.clip', 'TimContent', '@elsa.boost',
 ];
+const RIVALS = RIVAL_NAMES.map((name, i) => ({
+  name,
+  t: 23.4 + i * 1.18 + (i % 4) * 0.17,
+}));
 
 // ---------- Configuration des deux parcours ----------
 // Physique identique (mêmes sensations) ; on fait varier vitesse, densité,
@@ -386,33 +391,20 @@ function renderLeaderboard(pt) {
   all.push({ name: 'TOI', t: pt, me: true });
   all.sort((a, b) => a.t - b.t);
   const meIdx = all.findIndex((e) => e.me);
-  const rank = meIdx + 1, total = all.length;
-
-  // Fenêtre d'affichage : podium (top 3) + voisins du joueur
-  const show = new Set([0, 1, 2, meIdx - 1, meIdx, meIdx + 1]);
-  const idxs = [...show].filter((i) => i >= 0 && i < total).sort((a, b) => a - b);
+  const rank = meIdx + 1;
+  const top50 = all.slice(0, 50);
   const medals = ['🥇', '🥈', '🥉'];
-  let html = '', prev = -1;
-  idxs.forEach((i) => {
-    if (prev >= 0 && i > prev + 1) html += '<div class="lb-gap">⋯</div>';
-    const e = all[i];
+  let html = '';
+  top50.forEach((e, i) => {
     const pos = medals[i] || ('#' + (i + 1));
     html += `<div class="lb-row${e.me ? ' me' : ''}">` +
       `<span class="lb-pos">${pos}</span>` +
       `<span class="lb-name">${e.me ? '⭐ TOI' : e.name}</span>` +
       `<span class="lb-time">${formatTime(e.t)}</span>` +
     '</div>';
-    prev = i;
   });
   $('#lb-rows').innerHTML = html;
-  $('#lb-caption').textContent = `Tu es ${rank}ᵉ sur ${total} — ${rankComment(rank, total)}`;
-}
-
-function rankComment(rank, total) {
-  if (rank === 1) return 'le plus rapide du monde ! 🔥';
-  if (rank <= 3) return 'sur le podium ! 🏅';
-  if (rank <= total / 2) return 'beau temps, continue !';
-  return 'rejoue pour grimper au classement !';
+  $('#lb-caption').textContent = `Bravo, tu es dans le top 50 ! Tu es ${rank}ᵉ.`;
 }
 
 // ============================================================
