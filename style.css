@@ -203,7 +203,10 @@ kbd{background:rgba(255,255,255,.1); border:1px solid var(--glass-brd); border-b
 
 /* ---------- Bouton son ---------- */
 .mute-btn{
-  position:absolute; top:14px; right:14px; z-index:40;
+  position:absolute;
+  top:calc(clamp(12px,3vw,22px) + 16px);
+  right:calc(clamp(12px,3vw,26px) + 86px);
+  z-index:40;
   width:42px; height:42px; border-radius:12px; cursor:pointer;
   background:var(--glass); border:1px solid var(--glass-brd); color:var(--text);
   font-size:1.1rem; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);

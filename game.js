@@ -552,7 +552,8 @@ function loop(t) {
 // ============================================================
 function update(dt) {
   elapsed += dt;
-  timeLeft -= dt;
+  timeLeft = Math.max(0, timeLeft - dt);
+  syncHud();
   if (timeLeft <= 0) { timeLeft = 0; syncHud(); gameOver(); return; }
 
   if (trendTimer > 0) { trendTimer -= dt; if (trendTimer <= 0) { trendTimer = 0; dom.trendBanner.classList.add('hidden'); } }
