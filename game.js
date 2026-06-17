@@ -318,6 +318,7 @@ function startGame(id) {
 function gameOver() {
   state = 'gameover';
   input.down = false;
+  settleEndScene();
   sfx.over();
   const best = parseInt(localStorage.getItem(bestKey) || '0', 10);
   if (followers > best) { localStorage.setItem(bestKey, String(followers)); isNewBest = true; }
@@ -362,6 +363,7 @@ function countUp(el, target, dur, fmt) {
 function winGame() {
   state = 'win';
   input.down = false;
+  settleEndScene();
   winTime = elapsed;                          // temps mis pour atteindre 2000 followers
   followers = Math.max(followers, WIN_GOAL);
   const best = parseInt(localStorage.getItem(bestKey) || '0', 10);
@@ -383,6 +385,12 @@ function winGame() {
 }
 
 function formatTime(s) { return s.toFixed(1).replace('.', ',') + ' s'; }
+
+function settleEndScene() {
+  shake = 0; flashGood = 0; flashBad = 0; trendTimer = 0; comboFx = 0;
+  collectibles = []; obstacles = []; particles = []; popups = [];
+  dom.trendBanner.classList.add('hidden');
+}
 
 function renderLeaderboard(pt) {
   const all = RIVALS.map((r) => ({ name: r.name, t: r.t, me: false }));
@@ -540,7 +548,7 @@ function loop(t) {
   } else if (state === 'playing') {
     update(dt);
   } else {
-    updateBackground(dt, 60);    // léger défilement décoratif au menu / game over
+    updateBackground(dt, 60);    // même défilement décoratif que le menu
   }
 
   render();
@@ -803,7 +811,7 @@ function render() {
   drawSkyline();
   drawStreet();
 
-  if (state !== 'menu') {
+  if (state === 'countdown' || state === 'playing') {
     drawCollectibles();
     drawObstacles();
     drawParticles();
