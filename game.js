@@ -3,6 +3,7 @@
    Endless runner type Jetpack Joyride.
    - Maintenir (clic / doigt / Espace) = poussée vers le haut.
    - Attraper ❤️/🧑 (followers+), éviter 🐛/😡/💢 (followers-), 🔥 = tendance x2.
+   - SÉRIE : enchaîner les bons objets fait monter un multiplicateur ×2→×5.
    - Temps écoulé -> score figé = followers = XP.
    Repère logique fixe : 1000 x 600 px (mis à l'échelle via le contexte).
    ============================================================ */
@@ -14,33 +15,35 @@ const LOGW = 1000, LOGH = 600;
 const PLAYER_X = 235;          // l'avatar reste à gauche, le monde défile
 const CEIL_Y = 30;             // plafond jouable
 const FLOOR_Y = LOGH - 54;     // sol jouable (au-dessus de la bande de rue)
+const GAME_URL = 'https://coaxel2.github.io/course-viralite/';
 
 // ---------- Configuration des deux parcours ----------
 // Physique identique (mêmes sensations) ; on fait varier vitesse, densité,
 // pénalités et récompenses pour distinguer « découverte » et « maîtrise ».
+// Réglage généreux : on veut un compteur qui grimpe vite et fort.
 const PARCOURS = {
   1: {
     id: 1, name: 'Découverte', label: 'P1 · Découverte', guided: true,
     duration: 60,
-    baseSpeed: 285, speedRampFrac: 0.30,      // +30 % de vitesse en fin de manche
-    gravity: 1850, thrust: 3450, vMax: 760,
-    good: [0.62, 0.98], bad: [1.75, 2.7], trend: [10, 15], badRampFrac: 0.30,
-    penaltyMult: 0.5, rewardMult: 1.0, trendDuration: 6.0,
+    baseSpeed: 265, speedRampFrac: 0.22,      // tempo posé
+    gravity: 1820, thrust: 3450, vMax: 760,
+    good: [0.48, 0.74], bad: [2.3, 3.3], trend: [8, 12], badRampFrac: 0.18,
+    penaltyMult: 0.4, rewardMult: 1.3, trendDuration: 7.0,
   },
   2: {
     id: 2, name: 'Maîtrise', label: 'P2 · Maîtrise', guided: false,
     duration: 60,
-    baseSpeed: 370, speedRampFrac: 0.42,
-    gravity: 1950, thrust: 3550, vMax: 800,
-    good: [0.5, 0.8], bad: [1.0, 1.65], trend: [12, 18], badRampFrac: 0.42,
-    penaltyMult: 1.0, rewardMult: 1.2, trendDuration: 4.5,
+    baseSpeed: 330, speedRampFrac: 0.34,
+    gravity: 1920, thrust: 3520, vMax: 800,
+    good: [0.4, 0.62], bad: [1.5, 2.2], trend: [9, 14], badRampFrac: 0.3,
+    penaltyMult: 0.8, rewardMult: 1.55, trendDuration: 6.0,
   },
 };
 
 // ---------- Tables d'objets ----------
 const GOOD = [
-  { type: 'like',     emoji: '❤️', value: 1, r: 19, weight: 72 },
-  { type: 'follower', emoji: '🧑', value: 3, r: 23, weight: 28 },
+  { type: 'like',     emoji: '❤️', value: 2, r: 19, weight: 72 },
+  { type: 'follower', emoji: '🧑', value: 6, r: 23, weight: 28 },
 ];
 const BAD = [
   { type: 'bug',  emoji: '🐛', penalty: 2, r: 23, weight: 46 },
@@ -48,6 +51,17 @@ const BAD = [
   { type: 'buzz', emoji: '💢', penalty: 5, r: 29, weight: 20 },
 ];
 const TREND = { type: 'trend', emoji: '🔥', r: 25 };
+
+// Paliers célébrés pendant la partie + rangs de fin
+const MILESTONES = [100, 250, 500, 1000, 2000, 4000, 8000];
+const RANKS = [
+  { min: 1500, plain: '🚀🔥 VIRAL',                 html: '🚀🔥 <b>VIRAL</b> — la ville entière partage tes posts !' },
+  { min: 750,  plain: '🌟 Star montante',           html: '🌟 <b>Star montante</b> — tu squattes les recommandations.' },
+  { min: 350,  plain: '📈 Créateur·rice en montée', html: '📈 <b>Créateur·rice en montée</b> — l\'algo t\'adore.' },
+  { min: 120,  plain: '🌱 Micro-buzz',              html: '🌱 <b>Micro-buzz</b> — ça commence à frémir.' },
+  { min: 0,    plain: '👻 Fantôme du web',          html: '👻 <b>Fantôme du web</b> — retente ta chance !' },
+];
+const rankFor = (n) => RANKS.find((r) => n >= r.min);
 
 // ---------- DOM ----------
 const $ = (s) => document.querySelector(s);
@@ -60,6 +74,7 @@ let cfg = null;
 let player, collectibles, obstacles, particles, popups, bgFar, bgNear;
 let followers, followersShown, likesRun, timeLeft, elapsed, worldSpeed;
 let trendTimer, comboFx;
+let combo, comboMult, comboTimer, milestoneIdx, maxCombo;
 let spawnGoodT, spawnBadT, spawnTrendT;
 let shake, flashGood, flashBad, hintT, countdownT, streetOffset;
 let bestKey, isNewBest;
@@ -90,8 +105,10 @@ function beep(freq, dur, type = 'sine', gain = 0.06, slideTo = null) {
 const sfx = {
   like:    () => beep(680, 0.12, 'triangle', 0.05, 1020),
   follow:  () => { beep(620, 0.1, 'triangle', 0.05, 920); setTimeout(() => beep(940, 0.12, 'triangle', 0.05, 1240), 70); },
+  combo:   (n) => beep(560 + n * 90, 0.12, 'square', 0.045, 980 + n * 120),
   hit:     () => beep(150, 0.22, 'square', 0.07, 70),
   trend:   () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.14, 'sawtooth', 0.045), i * 70)); },
+  milestone: () => { [784, 988, 1319].forEach((f, i) => setTimeout(() => beep(f, 0.16, 'triangle', 0.05), i * 90)); },
   go:      () => beep(880, 0.16, 'triangle', 0.05, 1320),
   over:    () => { [784, 587, 440].forEach((f, i) => setTimeout(() => beep(f, 0.22, 'sine', 0.05), i * 130)); },
 };
@@ -124,7 +141,10 @@ function init() {
   dom.statFollowers = $('.stat-followers');
   dom.statLikes = $('.stat-likes');
   dom.trendBanner = $('#trend-banner');
+  dom.combo = $('#hud-combo');
+  dom.comboVal = $('#hud-combo-val');
   dom.mute = $('#mute-btn');
+  dom.share = $('#btn-share');
 
   refreshBestLabels();
   updateMuteBtn();
@@ -138,6 +158,7 @@ function init() {
 
   $('#btn-replay').addEventListener('click', () => startGame(cfg ? cfg.id : 1));
   $('#btn-menu').addEventListener('click', showMenu);
+  dom.share.addEventListener('click', shareScore);
 
   // Son
   dom.mute.addEventListener('click', (e) => { e.stopPropagation(); toggleMute(); });
@@ -197,13 +218,14 @@ function startGame(id) {
   timeLeft = cfg.duration; elapsed = 0;
   worldSpeed = cfg.baseSpeed;
   trendTimer = 0; comboFx = 0;
+  combo = 0; comboMult = 1; comboTimer = 0; milestoneIdx = 0; maxCombo = 1;
   shake = 0; flashGood = 0; flashBad = 0; streetOffset = 0;
   isNewBest = false;
   collectibles = []; obstacles = []; particles = []; popups = [];
   player = { x: PLAYER_X, y: LOGH * 0.5, vy: 0, r: 22, tilt: 0, trail: [] };
   buildSkyline();
   // Délais de spawn (le 1er bon objet arrive vite pour amorcer)
-  spawnGoodT = 0.5; spawnBadT = cfg.bad[1]; spawnTrendT = rand(cfg.trend[0], cfg.trend[1]);
+  spawnGoodT = 0.4; spawnBadT = cfg.bad[1]; spawnTrendT = rand(cfg.trend[0], cfg.trend[1]);
   hintT = cfg.guided ? 0 : -1;     // -1 = pas de tuto
   countdownT = 3.0;
 
@@ -211,6 +233,7 @@ function startGame(id) {
   dom.over.classList.add('hidden');
   dom.hud.classList.remove('hidden');
   dom.trendBanner.classList.add('hidden');
+  updateComboHud();
   syncHud();
   state = 'countdown';
 }
@@ -226,8 +249,9 @@ function gameOver() {
   $('#over-likes').textContent = likesRun;
   $('#over-best').textContent = shownBest;
   $('#over-parcours').textContent = cfg.id;
-  $('#over-rank').innerHTML = rankFor(followers);
+  $('#over-rank').innerHTML = rankFor(followers).html;
   $('#over-newbest').classList.toggle('hidden', !isNewBest);
+  dom.share.textContent = '📤 Partager';
 
   // Compteur animé du score final
   const el = $('#over-score');
@@ -245,25 +269,20 @@ function gameOver() {
   dom.over.classList.remove('hidden');
 }
 
-function rankFor(n) {
-  if (n >= 700) return '🚀🔥 <b>VIRAL</b> — la ville entière partage tes posts !';
-  if (n >= 350) return '🌟 <b>Star montante</b> — tu squattes les recommandations.';
-  if (n >= 150) return '📈 <b>Créateur·rice en montée</b> — l\'algo t\'a repéré·e.';
-  if (n >= 50)  return '🌱 <b>Micro-buzz</b> — ça commence à frémir.';
-  return '👻 <b>Fantôme du web</b> — retente ta chance !';
-}
-
 // ============================================================
 //  Boucle principale
 // ============================================================
 function loop(t) {
-  const dt = Math.min((t - lastT) / 1000 || 0, 0.05);
+  // dt borné à [0, 0.05] : protège des anomalies d'horloge / reprise d'onglet
+  let dt = (t - lastT) / 1000;
+  if (!(dt > 0)) dt = 0;
+  dt = Math.min(dt, 0.05);
   lastT = t;
 
   if (state === 'countdown') {
     countdownT -= dt;
     updateBackground(dt, cfg.baseSpeed * 0.4);
-    if (countdownT <= 0) { state = 'playing'; sfx.go(); addPopup(player.x, player.y - 40, 'GO !', '#34e7e4', 1.4); }
+    if (countdownT <= 0) { state = 'playing'; sfx.go(); addPopup(player.x, player.y - 40, 'GO !', '#f0934a', 1.4); }
   } else if (state === 'playing') {
     update(dt);
   } else {
@@ -283,6 +302,12 @@ function update(dt) {
   if (timeLeft <= 0) { timeLeft = 0; syncHud(); gameOver(); return; }
 
   if (trendTimer > 0) { trendTimer -= dt; if (trendTimer <= 0) { trendTimer = 0; dom.trendBanner.classList.add('hidden'); } }
+
+  // Refroidissement de la série : si on n'attrape rien pendant un moment, elle retombe
+  if (comboTimer > 0) {
+    comboTimer -= dt;
+    if (comboTimer <= 0 && comboMult > 1) { combo = 0; comboMult = 1; updateComboHud(); }
+  }
 
   // Vitesse du monde : rampe de difficulté + boost tendance
   const ramp = 1 + cfg.speedRampFrac * (elapsed / cfg.duration);
@@ -324,10 +349,10 @@ function update(dt) {
     const o = collectibles[i];
     o.x -= worldSpeed * dt;
     o.bob += dt * 4;
-    // Aimant doux vers l'avatar (récolte agréable)
+    // Aimant généreux vers l'avatar (récolte facile et satisfaisante)
     const dx = player.x - o.x, dy = player.y - o.y;
     const d = Math.hypot(dx, dy) || 1;
-    if (d < 115) { const f = (1 - d / 115) * 240 * dt; o.x += dx / d * f; o.y += dy / d * f; }
+    if (d < 168) { const f = (1 - d / 168) * 330 * dt; o.x += dx / d * f; o.y += dy / d * f; }
 
     if (d < player.r + o.r) {
       collectibles.splice(i, 1);
@@ -338,13 +363,23 @@ function update(dt) {
         burst(o.x, o.y, 26, ['#ffd23f', '#ff3d8b', '#34e7e4'], 260);
         addPopup(o.x, o.y, 'TENDANCE ×2 !', '#ffd23f', 1.3);
       } else {
-        const gain = Math.max(1, Math.round(o.value * mult * cfg.rewardMult));
+        // Série : chaque bon objet la fait monter
+        combo++; comboTimer = 3.6;
+        const newMult = Math.min(5, 1 + Math.floor(combo / 6));
+        if (newMult > comboMult) {
+          comboMult = newMult; maxCombo = Math.max(maxCombo, comboMult);
+          addPopup(player.x, player.y - 48, 'SÉRIE ×' + comboMult + ' !', '#ffd23f', 1.2);
+          sfx.combo(comboMult); shake = Math.max(shake, 5);
+        }
+        const gain = Math.max(1, Math.round(o.value * mult * cfg.rewardMult * comboMult));
         followers += gain;
         if (o.type === 'like') likesRun++;
         o.type === 'follower' ? sfx.follow() : sfx.like();
         burst(o.x, o.y, o.type === 'follower' ? 14 : 9, ['#ff77ae', '#ff3d8b', '#fff'], 170);
-        addPopup(o.x, o.y, '+' + gain, '#42e6a4', o.type === 'follower' ? 1.1 : 0.95);
+        addPopup(o.x, o.y, '+' + gain, '#42e6a4', o.type === 'follower' ? 1.15 : 0.95);
         flashGood = 0.18; bumpStat(dom.statFollowers);
+        checkMilestones();
+        updateComboHud();
       }
       syncHud();
     } else if (o.x < -60) {
@@ -358,10 +393,13 @@ function update(dt) {
     o.x -= worldSpeed * dt;
     o.bob += dt * 3;
     const d = Math.hypot(player.x - o.x, player.y - o.y);
-    if (d < player.r + o.r * 0.82) {   // hitbox un peu indulgente
+    if (d < player.r + o.r * 0.7) {     // hitbox clémente
       obstacles.splice(i, 1);
       const dmg = Math.max(1, Math.round(o.penalty * cfg.penaltyMult));
       followers = Math.max(0, followers - dmg);
+      // Perte de la série
+      if (comboMult > 1) addPopup(player.x, player.y - 44, 'série perdue', '#ff5470', 0.9);
+      combo = 0; comboMult = 1; comboTimer = 0; updateComboHud();
       sfx.hit(); shake = Math.max(shake, 12); flashBad = 0.32;
       burst(o.x, o.y, 16, ['#ff5470', '#8a8a9a', '#3a2a4a'], 200);
       addPopup(o.x, o.y, '-' + dmg, '#ff5470', 1.1);
@@ -389,6 +427,15 @@ function update(dt) {
   // Affichage lissé du compteur de followers
   followersShown = lerp(followersShown, followers, 1 - Math.pow(0.001, dt));
   dom.followers.textContent = Math.round(followersShown);
+}
+
+function checkMilestones() {
+  while (milestoneIdx < MILESTONES.length && followers >= MILESTONES[milestoneIdx]) {
+    addPopup(500, 150, '🔥 ' + MILESTONES[milestoneIdx] + ' FOLLOWERS !', '#f0934a', 1.5);
+    flashGood = Math.max(flashGood, 0.28); shake = Math.max(shake, 7);
+    sfx.milestone();
+    milestoneIdx++;
+  }
 }
 
 function updateParticles(dt) {
@@ -620,6 +667,16 @@ function drawPlayer() {
   ctx.translate(player.x, player.y);
   ctx.rotate(player.tilt * 0.32);
 
+  // Aura quand la série est élevée
+  if (comboMult >= 2) {
+    ctx.save(); ctx.globalAlpha = 0.4 + Math.sin(elapsed * 12) * 0.12;
+    const ag = ctx.createRadialGradient(0, 0, 8, 0, 0, 52);
+    const col = comboMult >= 4 ? '255,210,63' : '240,147,74';
+    ag.addColorStop(0, `rgba(${col},.5)`); ag.addColorStop(1, `rgba(${col},0)`);
+    ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(0, 0, 52, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
   // Flamme du réacteur (sous l'avatar)
   const flame = (input.down ? 1 : 0.45) * (1 + Math.sin(elapsed * 40) * 0.12);
   const fl = 26 * flame + 10;
@@ -639,7 +696,7 @@ function drawPlayer() {
   ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   // contour néon
   ctx.lineWidth = 2.5;
-  ctx.strokeStyle = trendTimer > 0 ? '#ffd23f' : '#34e7e4';
+  ctx.strokeStyle = trendTimer > 0 ? '#ffd23f' : '#f0934a';
   roundRect(-bw / 2, -bh / 2, bw, bh, rad); ctx.stroke();
 
   // Écran
@@ -696,7 +753,7 @@ function drawCountdown() {
   ctx.globalAlpha = clamp(frac * 1.4, 0, 1);
   ctx.font = '900 160px "Outfit",sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#34e7e4'; ctx.shadowColor = '#ff3d8b'; ctx.shadowBlur = 30;
+  ctx.fillStyle = '#f0934a'; ctx.shadowColor = '#ff3d8b'; ctx.shadowBlur = 30;
   ctx.fillText(n, 0, 0);
   ctx.restore();
   ctx.shadowBlur = 0;
@@ -713,7 +770,7 @@ function drawHints() {
   const seg = (a, b, text) => { if (hintT >= a && hintT < b) { msg = text; const k = hintT - a; fade = clamp(Math.min(k, (b - a) - k) * 2.2, 0, 1); } };
   seg(0.3, 3.6, 'Maintiens le clic / l\'espace pour t\'envoler 🚀');
   seg(3.6, 7.0, 'Attrape les ❤️ et les 🧑 → des followers !');
-  seg(7.0, 10.5, 'Évite 🐛 😡 💢 … et fonce sur 🔥 pour le ×2 !');
+  seg(7.0, 10.5, 'Enchaîne sans te cogner → la SÉRIE ×5 explose ton score !');
   if (!msg) return;
   ctx.globalAlpha = fade;
   ctx.font = '800 25px "Outfit",sans-serif';
@@ -743,6 +800,15 @@ function syncHud() {
   dom.time.textContent = Math.ceil(timeLeft);
   dom.timer.classList.toggle('urgent', timeLeft <= 10 && state === 'playing');
 }
+function updateComboHud() {
+  if (comboMult >= 2) {
+    dom.combo.classList.remove('hidden');
+    dom.comboVal.textContent = comboMult;
+    dom.combo.classList.toggle('combo-hot', comboMult >= 4);
+  } else {
+    dom.combo.classList.add('hidden');
+  }
+}
 function refreshBestLabels() {
   document.querySelectorAll('[data-best]').forEach((el) => {
     el.textContent = localStorage.getItem('viral_best_' + el.dataset.best) || '0';
@@ -755,6 +821,38 @@ function toggleMute() {
   updateMuteBtn();
 }
 function updateMuteBtn() { dom.mute.textContent = muted ? '🔇' : '🔊'; }
+
+// ---------- Partage du score ----------
+function shareScore() {
+  const r = rankFor(followers);
+  const txt = `J'ai atteint ${followers} followers (XP) sur « La Course à la Viralité » — parcours ${cfg.name} ! ${r.plain}. Tu fais mieux ? 🚀`;
+  const url = location.protocol.startsWith('http') ? location.href.split('#')[0] : GAME_URL;
+  const full = `${txt}\n${url}`;
+  if (navigator.share) {
+    navigator.share({ title: 'La Course à la Viralité', text: txt, url }).catch(() => {});
+    return;
+  }
+  copyText(full).then((ok) => {
+    dom.share.textContent = ok ? '✓ Copié !' : '⚠ Copie impossible';
+    setTimeout(() => { dom.share.textContent = '📤 Partager'; }, 1900);
+  });
+}
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopy(text));
+  }
+  return Promise.resolve(fallbackCopy(text));
+}
+function fallbackCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
 
 // ---------- Go ----------
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

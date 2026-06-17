@@ -1,9 +1,13 @@
 # La Course à la Viralité 🚀
 
-Jeu navigateur type **Jetpack Joyride** sur le thème des réseaux sociaux.
+Jeu navigateur type **Jetpack Joyride** sur le thème des réseaux sociaux, aux couleurs de
+la formation **Marketing & Communication — Ynov**.
 L'avatar avance tout seul dans une ville numérique : **maintiens** pour t'envoler,
 attrape ❤️ et 🧑 (followers +), évite 🐛 😡 💢 (followers −), fonce sur 🔥 (× 2 + accélération).
-Quand le temps est écoulé, le compteur de followers se fige : **c'est ton score = ton XP**.
+Enchaîne les bons objets sans te cogner pour faire monter la **SÉRIE ×2 → ×5** (gains multipliés),
+et célèbre les paliers (100, 250, 500… followers).
+Quand le temps est écoulé, le compteur de followers se fige : **c'est ton score = ton XP** —
+que tu peux ensuite **partager** en un clic.
 
 ## Deux parcours
 
