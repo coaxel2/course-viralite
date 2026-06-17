@@ -58,13 +58,15 @@ body{
 /* ---------- Overlays génériques ---------- */
 .screen{
   position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
+  display:flex; align-items:flex-start; justify-content:center;
   padding:24px;
   background:radial-gradient(900px 600px at 50% 20%, rgba(20,10,42,.55), rgba(8,4,18,.86));
   backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px);
-  z-index:30; overflow:auto;
+  z-index:30; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y;
   animation:fade .35s ease both;
 }
+/* centrage vertical quand ça tient, scroll sûr (haut atteignable) quand c'est trop grand */
+.screen > *{margin:auto;}
 .hidden{display:none !important;}
 @keyframes fade{from{opacity:0} to{opacity:1}}
 @keyframes pop{from{opacity:0;transform:translateY(16px) scale(.96)} to{opacity:1;transform:none}}
@@ -247,6 +249,122 @@ kbd{background:rgba(255,255,255,.1); border:1px solid var(--glass-brd); border-b
 .btn-share{background:rgba(216,116,59,.16); border-color:rgba(216,116,59,.6); color:#ffd9bf;}
 .btn-share:hover{background:rgba(216,116,59,.28);}
 .btn-ghost{background:rgba(255,255,255,.06); border-color:var(--glass-brd); color:var(--text);}
+
+/* Teaser verrouillé sur l'écran de fin */
+.over-locked{
+  display:inline-block; margin-bottom:16px; font-size:.92rem; color:#e9c9b3;
+  background:rgba(216,116,59,.12); border:1px dashed rgba(216,116,59,.55);
+  border-radius:12px; padding:.55em 1em;
+}
+.over-locked b{color:var(--brand-light);}
+
+/* ============================================================
+   Écran VICTOIRE
+   ============================================================ */
+.win-inner{width:min(560px,100%); text-align:center; animation:pop .5s ease both;}
+.win-trophy{font-size:5rem; line-height:1; filter:drop-shadow(0 10px 26px rgba(255,210,63,.5)); animation:trophy 2.4s ease-in-out infinite;}
+@keyframes trophy{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}
+.win-kicker{letter-spacing:.4em; font-size:.85rem; font-weight:800; color:var(--brand-light); margin-top:8px;}
+.win-title{font-size:clamp(2rem,7vw,3.2rem); font-weight:900; line-height:1; margin:.2em 0;}
+.win-title span{
+  background:linear-gradient(100deg,var(--gold),var(--brand-light),var(--brand));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.win-sub{color:var(--muted); max-width:440px; margin:.6em auto 0; line-height:1.5;}
+.win-sub b{color:var(--text);}
+.win-score{margin:18px 0; display:flex; flex-direction:column; align-items:center;}
+.win-score span{
+  font-size:clamp(3rem,12vw,5rem); font-weight:900; font-variant-numeric:tabular-nums; line-height:.9;
+  background:linear-gradient(100deg,var(--gold),var(--brand)); -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.win-score small{letter-spacing:.14em; font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; margin-top:.4em;}
+.btn-lg{font-size:1.15rem; padding:1em 1.8em; animation:ctaPulse 1.8s ease infinite;}
+@keyframes ctaPulse{0%,100%{transform:scale(1); box-shadow:0 16px 34px -16px var(--brand)}50%{transform:scale(1.035); box-shadow:0 22px 44px -16px var(--brand)}}
+.win-actions{display:flex; gap:12px; justify-content:center; margin-top:18px;}
+
+/* ============================================================
+   Écran CHALLENGE — Défi Campagne
+   ============================================================ */
+.ch-inner{width:min(820px,100%); text-align:center; animation:pop .45s ease both;}
+.ch-brief{
+  background:linear-gradient(120deg,rgba(216,116,59,.18),rgba(255,61,139,.12));
+  border:1px solid rgba(216,116,59,.4); border-radius:18px; padding:16px 20px; margin-bottom:20px;
+}
+.ch-brief-tag{font-size:.7rem; font-weight:800; letter-spacing:.2em; color:var(--brand-light);}
+.ch-brief p{font-size:clamp(1.05rem,3vw,1.4rem); font-weight:800; margin-top:.3em;}
+.ch-progress{display:flex; gap:8px; justify-content:center; margin-bottom:20px;}
+.ch-pip{flex:0 0 auto; width:38px; height:6px; border-radius:99px; background:rgba(255,255,255,.14); transition:background .3s ease;}
+.ch-pip.done{background:linear-gradient(90deg,var(--brand-light),var(--brand));}
+.ch-pip.current{background:var(--brand-light); box-shadow:0 0 0 3px rgba(240,147,74,.25);}
+.ch-step-title{font-size:1.5rem; font-weight:900;}
+.ch-step-q{color:var(--muted); margin:.3em 0 18px;}
+.ch-cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px;}
+.ch-card{
+  cursor:pointer; text-align:left; color:var(--text);
+  background:var(--glass); border:1.5px solid var(--glass-brd); border-radius:18px;
+  padding:18px 16px; transition:transform .15s ease, border-color .2s ease, box-shadow .25s ease;
+  animation:cardIn .4s ease both; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  min-height:128px; display:flex; flex-direction:column;
+}
+.ch-card:hover,.ch-card:focus-visible{transform:translateY(-5px); border-color:var(--brand); box-shadow:0 22px 40px -22px var(--brand);}
+.ch-card.chosen{border-color:var(--brand); box-shadow:0 0 0 3px rgba(216,116,59,.4); transform:scale(.97);}
+.ch-card-emoji{font-size:2.1rem; line-height:1;}
+.ch-card-label{font-size:1.1rem; font-weight:800; margin-top:8px;}
+.ch-card-desc{font-size:.85rem; color:var(--muted); margin-top:4px; line-height:1.4;}
+@keyframes cardIn{from{opacity:0; transform:translateY(14px)}to{opacity:1; transform:none}}
+
+/* ============================================================
+   Écran RÉSULTAT — faux post animé
+   ============================================================ */
+.res-inner{width:min(440px,100%); text-align:center; animation:pop .45s ease both;}
+.res-headline{font-size:1.4rem; font-weight:900; margin-bottom:16px;}
+.post-card{
+  text-align:left; background:#14101d; border:1px solid rgba(255,255,255,.1); border-radius:22px;
+  overflow:hidden; box-shadow:var(--shadow); animation:postIn .6s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes postIn{from{opacity:0; transform:scale(.85) translateY(20px)}to{opacity:1; transform:none}}
+.post-head{display:flex; align-items:center; gap:10px; padding:12px 14px;}
+.post-avatar{width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.4rem; background:linear-gradient(135deg,var(--brand),var(--pink)); flex:0 0 auto;}
+.post-id{flex:1; min-width:0;}
+.post-handle{font-weight:800; font-size:.95rem;}
+.post-sub{font-size:.74rem; color:var(--muted);}
+.post-badge{font-size:.68rem; font-weight:800; padding:.3em .6em; border-radius:99px; color:#fff; white-space:nowrap;}
+.post-media{position:relative; aspect-ratio:1/1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:18px; color:#fff;}
+.post-media-emoji{font-size:4.6rem; line-height:1; filter:drop-shadow(0 6px 16px rgba(0,0,0,.35)); animation:floaty 3s ease-in-out infinite;}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.post-media-headline{font-size:1.25rem; font-weight:900; margin-top:12px; text-shadow:0 2px 12px rgba(0,0,0,.45); line-height:1.2;}
+.post-pop-heart{position:absolute; left:50%; top:62%; font-size:2.4rem; opacity:0; pointer-events:none;}
+.post-actions{display:flex; align-items:center; gap:16px; padding:12px 14px 4px; font-size:1.3rem;}
+.post-actions .spacer{flex:1;}
+.post-likes{padding:2px 14px 10px; font-weight:800; font-size:.95rem;}
+.post-caption{padding:0 14px 12px; font-size:.9rem; line-height:1.45;}
+.post-caption .tags{color:var(--brand-light); font-weight:700;}
+.post-foot{padding:10px 14px; border-top:1px solid rgba(255,255,255,.08); font-size:.76rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 12px;}
+.res-verdict{margin:18px 0; background:var(--glass); border:1px solid var(--glass-brd); border-radius:16px; padding:14px 16px; animation:fade .8s ease both;}
+.res-verdict .stars{font-size:1.3rem; letter-spacing:2px;}
+.res-verdict .vtext{font-weight:700; margin-top:6px; color:#ece4ff;}
+.res-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+
+/* ============================================================
+   Mobile / tactile
+   ============================================================ */
+@media (max-width:560px){
+  .screen{padding:18px 14px;}
+  .cards{gap:14px;}
+  .over-actions,.res-actions,.win-actions{flex-direction:column;}
+  .over-actions .btn,.res-actions .btn,.win-actions .btn{width:100%;}
+  .ch-cards{grid-template-columns:1fr 1fr; gap:10px;}
+  .ch-card{min-height:112px; padding:14px 12px;}
+  .ch-card-label{font-size:1rem;}
+  .btn{padding:.85em 1.2em;}
+}
+/* Astuce paysage pour le confort de jeu (n'empêche pas de jouer en portrait) */
+.rotate-hint{display:none;}
+@media (max-width:760px) and (orientation:portrait){
+  .rotate-hint{
+    display:block; margin-top:14px; font-size:.82rem; color:var(--muted);
+  }
+}
 
 /* Accessibilité : réduit les animations si demandé */
 @media (prefers-reduced-motion:reduce){

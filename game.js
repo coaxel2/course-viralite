@@ -16,6 +16,7 @@ const PLAYER_X = 235;          // l'avatar reste à gauche, le monde défile
 const CEIL_Y = 30;             // plafond jouable
 const FLOOR_Y = LOGH - 54;     // sol jouable (au-dessus de la bande de rue)
 const GAME_URL = 'https://coaxel2.github.io/course-viralite/';
+const WIN_GOAL = 2000;         // followers à atteindre pour gagner + débloquer le Défi Campagne
 
 // ---------- Configuration des deux parcours ----------
 // Physique identique (mêmes sensations) ; on fait varier vitesse, densité,
@@ -27,16 +28,16 @@ const PARCOURS = {
     duration: 60,
     baseSpeed: 265, speedRampFrac: 0.22,      // tempo posé
     gravity: 1820, thrust: 3450, vMax: 760,
-    good: [0.48, 0.74], bad: [2.3, 3.3], trend: [8, 12], badRampFrac: 0.18,
-    penaltyMult: 0.4, rewardMult: 1.3, trendDuration: 7.0,
+    good: [0.48, 0.74], bad: [2.3, 3.3], trend: [7, 10], badRampFrac: 0.18,
+    penaltyMult: 0.4, rewardMult: 1.4, trendDuration: 7.0,
   },
   2: {
     id: 2, name: 'Maîtrise', label: 'P2 · Maîtrise', guided: false,
     duration: 60,
     baseSpeed: 330, speedRampFrac: 0.34,
     gravity: 1920, thrust: 3520, vMax: 800,
-    good: [0.4, 0.62], bad: [1.5, 2.2], trend: [9, 14], badRampFrac: 0.3,
-    penaltyMult: 0.8, rewardMult: 1.55, trendDuration: 6.0,
+    good: [0.4, 0.62], bad: [1.5, 2.2], trend: [8, 11], badRampFrac: 0.3,
+    penaltyMult: 0.8, rewardMult: 1.7, trendDuration: 6.0,
   },
 };
 
@@ -63,6 +64,47 @@ const RANKS = [
 ];
 const rankFor = (n) => RANKS.find((r) => n >= r.min);
 
+// ---------- Défi Campagne (challenge débloqué après la victoire) ----------
+const BRIEF = 'Lancer un nouveau produit auprès des jeunes.';
+const CANALS = {
+  tiktok:  { name: 'TikTok',    color: '#fe2c55', bg: 'linear-gradient(135deg,#000,#1f1f2e 55%,#fe2c55)', icon: '🎵' },
+  insta:   { name: 'Instagram', color: '#e1306c', bg: 'linear-gradient(135deg,#feda75,#fa7e1e 35%,#d62976 70%,#962fbf)', icon: '📸' },
+  youtube: { name: 'YouTube',   color: '#ff2d2d', bg: 'linear-gradient(135deg,#ff0000,#1a0000)', icon: '📺' },
+  snap:    { name: 'Snapchat',  color: '#111',    bg: 'linear-gradient(135deg,#fffc00,#ffe600 60%,#fff)', icon: '👻' },
+};
+const IDEAS = {
+  humour:     { emoji: '😂', bg: 'linear-gradient(135deg,#ffd23f,#ff77ae)', head: '« Attends… quoi ?! 😂 »',   cap: 'On a osé… et c\'est validé 😅✨' },
+  engagement: { emoji: '💚', bg: 'linear-gradient(135deg,#42e6a4,#2bb673)', head: '« On change la donne 💚 »',  cap: 'Un produit pensé pour vous, vraiment 💚' },
+  fomo:       { emoji: '🔥', bg: 'linear-gradient(135deg,#ff3d8b,#8a4bff)', head: '« Édition limitée — go ! 🔥 »', cap: 'Stock ultra-limité. Sois rapide ⏳🔥' },
+  arty:       { emoji: '🎨', bg: 'linear-gradient(135deg,#34e7e4,#8a4bff)', head: '« Une nouvelle ère 🎨 »',    cap: 'Le design qui change tout ✨' },
+};
+const CHALLENGE_STEPS = [
+  { key: 'cible', title: 'Choix 1 — La cible', q: 'À qui s\'adresse ta campagne ?', options: [
+      { emoji: '🎓', label: 'Les étudiants',     desc: '16-25 ans · hyperconnectés',     tag: '#étudiants', fit: 30 },
+      { emoji: '🧒', label: 'Les ados',          desc: '13-17 ans · prescripteurs',      tag: '#genZ',      fit: 28 },
+      { emoji: '💼', label: 'Les jeunes actifs', desc: '25-35 ans · pouvoir d\'achat',    tag: '#youngpro',  fit: 18 },
+      { emoji: '👨‍👩‍👧', label: 'Les familles',     desc: 'décisions partagées',            tag: '#famille',   fit: 8 },
+  ] },
+  { key: 'idee', title: 'Choix 2 — L\'idée de campagne', q: 'Quel angle créatif choisis-tu ?', options: [
+      { emoji: '😂', label: 'L\'humour viral',  desc: 'format fun & partageable',    idea: 'humour',     fit: 26 },
+      { emoji: '💚', label: 'L\'engagement',    desc: 'une cause qui parle',         idea: 'engagement', fit: 22 },
+      { emoji: '🔥', label: 'Le FOMO',          desc: 'drop exclusif, édition limitée', idea: 'fomo',    fit: 24 },
+      { emoji: '🎨', label: 'Le créatif arty',  desc: 'direction artistique forte',  idea: 'arty',       fit: 20 },
+  ] },
+  { key: 'canal', title: 'Choix 3 — Le canal', q: 'Où diffuser ta campagne ?', options: [
+      { emoji: '🎵', label: 'TikTok',    desc: 'reach jeune, formats courts', canal: 'tiktok',  fit: 30 },
+      { emoji: '📸', label: 'Instagram', desc: 'visuel, reels & stories',     canal: 'insta',   fit: 27 },
+      { emoji: '📺', label: 'YouTube',   desc: 'formats longs, créateurs',    canal: 'youtube', fit: 18 },
+      { emoji: '👻', label: 'Snapchat',  desc: 'ultra-jeune, éphémère',       canal: 'snap',    fit: 22 },
+  ] },
+  { key: 'final', title: 'Choix 4 — Le visage / le message', q: 'Qui ou quoi porte ta campagne ?', options: [
+      { emoji: '🌟', label: 'Un macro-influenceur', desc: 'notoriété immédiate',          handle: '@nova.officiel', fit: 20 },
+      { emoji: '🎤', label: 'Un micro-créateur',    desc: 'communauté ultra-engagée',     handle: '@theo.curates', fit: 26 },
+      { emoji: '🤝', label: 'Un duo de créateurs',  desc: 'collab qui buzze',             handle: '@lea.x.sam',    fit: 24 },
+      { emoji: '🏷️', label: 'Une accroche choc',    desc: '« Le drop que tout le monde attend »', headline: '« Le drop que tout le monde attend »', fit: 18 },
+  ] },
+];
+
 // ---------- DOM ----------
 const $ = (s) => document.querySelector(s);
 let canvas, ctx, baseSX = 1, baseSY = 1;
@@ -75,6 +117,7 @@ let player, collectibles, obstacles, particles, popups, bgFar, bgNear;
 let followers, followersShown, likesRun, timeLeft, elapsed, worldSpeed;
 let trendTimer, comboFx;
 let combo, comboMult, comboTimer, milestoneIdx, maxCombo;
+let challengeStep, campaign;
 let spawnGoodT, spawnBadT, spawnTrendT;
 let shake, flashGood, flashBad, hintT, countdownT, streetOffset;
 let bestKey, isNewBest;
@@ -145,6 +188,9 @@ function init() {
   dom.comboVal = $('#hud-combo-val');
   dom.mute = $('#mute-btn');
   dom.share = $('#btn-share');
+  dom.win = $('#screen-win');
+  dom.challenge = $('#screen-challenge');
+  dom.result = $('#screen-result');
 
   refreshBestLabels();
   updateMuteBtn();
@@ -160,6 +206,13 @@ function init() {
   $('#btn-menu').addEventListener('click', showMenu);
   dom.share.addEventListener('click', shareScore);
 
+  // Victoire → Défi Campagne
+  $('#btn-challenge').addEventListener('click', startChallenge);
+  $('#btn-win-replay').addEventListener('click', () => startGame(cfg ? cfg.id : 1));
+  $('#btn-win-menu').addEventListener('click', showMenu);
+  $('#btn-res-replay').addEventListener('click', () => startGame(cfg ? cfg.id : 1));
+  $('#btn-res-menu').addEventListener('click', showMenu);
+
   // Son
   dom.mute.addEventListener('click', (e) => { e.stopPropagation(); toggleMute(); });
 
@@ -173,6 +226,8 @@ function init() {
     if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); press(); }
     else if (e.code === 'KeyM') toggleMute();
     else if (e.code === 'Enter' && state === 'gameover') startGame(cfg ? cfg.id : 1);
+    // Raccourci démo : lance le Défi Campagne depuis le menu / fin / victoire
+    else if (e.code === 'KeyC' && (state === 'menu' || state === 'gameover' || state === 'win')) { if (!cfg) cfg = PARCOURS[1]; startChallenge(); }
   });
   window.addEventListener('keyup', (e) => {
     if (e.code === 'Space' || e.code === 'ArrowUp') release();
@@ -207,6 +262,9 @@ function showMenu() {
   input.down = false;
   dom.menu.classList.remove('hidden');
   dom.over.classList.add('hidden');
+  dom.win.classList.add('hidden');
+  dom.challenge.classList.add('hidden');
+  dom.result.classList.add('hidden');
   dom.hud.classList.add('hidden');
   refreshBestLabels();
 }
@@ -231,6 +289,9 @@ function startGame(id) {
 
   dom.menu.classList.add('hidden');
   dom.over.classList.add('hidden');
+  dom.win.classList.add('hidden');
+  dom.challenge.classList.add('hidden');
+  dom.result.classList.add('hidden');
   dom.hud.classList.remove('hidden');
   dom.trendBanner.classList.add('hidden');
   updateComboHud();
@@ -267,6 +328,149 @@ function gameOver() {
 
   dom.hud.classList.add('hidden');
   dom.over.classList.remove('hidden');
+}
+
+// Compteur animé réutilisable
+function countUp(el, target, dur, fmt) {
+  fmt = fmt || ((n) => String(n));
+  const t0 = performance.now();
+  (function tick(now) {
+    const k = Math.min(1, (now - t0) / dur);
+    const e = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmt(Math.round(target * e));
+    if (k < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+// ---------- Victoire ----------
+function winGame() {
+  state = 'win';
+  input.down = false;
+  followers = Math.max(followers, WIN_GOAL);
+  const best = parseInt(localStorage.getItem(bestKey) || '0', 10);
+  if (followers > best) localStorage.setItem(bestKey, String(followers));
+  sfx.trend();
+  dom.hud.classList.add('hidden');
+  dom.win.classList.remove('hidden');
+  countUp($('#win-score'), followers, 1200, (n) => n.toLocaleString('fr-FR'));
+}
+
+// ============================================================
+//  Défi Campagne (challenge)
+// ============================================================
+function startChallenge() {
+  state = 'challenge';
+  challengeStep = 0; campaign = {};
+  $('#ch-brief-text').textContent = BRIEF;
+  dom.menu.classList.add('hidden');
+  dom.over.classList.add('hidden');
+  dom.win.classList.add('hidden');
+  dom.result.classList.add('hidden');
+  dom.hud.classList.add('hidden');
+  dom.challenge.classList.remove('hidden');
+  renderChallengeStep();
+}
+
+function renderChallengeStep() {
+  const step = CHALLENGE_STEPS[challengeStep];
+  $('#ch-step-title').textContent = step.title;
+  $('#ch-step-q').textContent = step.q;
+
+  const prog = $('#ch-progress'); prog.innerHTML = '';
+  CHALLENGE_STEPS.forEach((s, i) => {
+    const p = document.createElement('div');
+    p.className = 'ch-pip' + (i < challengeStep ? ' done' : i === challengeStep ? ' current' : '');
+    prog.appendChild(p);
+  });
+
+  const wrap = $('#ch-cards'); wrap.innerHTML = '';
+  step.options.forEach((opt, i) => {
+    const c = document.createElement('button');
+    c.className = 'ch-card';
+    c.style.animationDelay = (i * 0.06) + 's';
+    c.innerHTML = `<span class="ch-card-emoji">${opt.emoji}</span>` +
+      `<span class="ch-card-label">${opt.label}</span>` +
+      `<span class="ch-card-desc">${opt.desc}</span>`;
+    c.addEventListener('click', () => chooseCard(opt, c));
+    wrap.appendChild(c);
+  });
+}
+
+function chooseCard(opt, el) {
+  if (el.classList.contains('chosen')) return;
+  ensureAudio();
+  campaign[CHALLENGE_STEPS[challengeStep].key] = opt;
+  el.parentNode.querySelectorAll('.ch-card').forEach((c) => {
+    c.style.pointerEvents = 'none';
+    if (c !== el) c.style.opacity = '.4';
+  });
+  el.classList.add('chosen');
+  sfx.like();
+  setTimeout(() => {
+    challengeStep++;
+    if (challengeStep < CHALLENGE_STEPS.length) renderChallengeStep();
+    else renderCampaign();
+  }, 360);
+}
+
+function renderCampaign() {
+  state = 'result';
+  const cible = campaign.cible;
+  const idea = IDEAS[campaign.idee.idea];
+  const canal = CANALS[campaign.canal.canal];
+  const fin = campaign.final;
+  const headline = fin.headline || idea.head;
+  const handle = fin.handle || '@ta.marque';
+  const verdict = computeVerdict();
+  const likesTarget = 1200 + verdict.score * 520 + randInt(0, 800);
+
+  $('#post-card').innerHTML =
+    `<div class="post-head">` +
+      `<div class="post-avatar">${fin.emoji}</div>` +
+      `<div class="post-id"><div class="post-handle">${handle}</div><div class="post-sub">Sponsorisé · ${cible.label}</div></div>` +
+      `<div class="post-badge" style="background:${canal.color}">${canal.icon} ${canal.name}</div>` +
+    `</div>` +
+    `<div class="post-media" style="background:${idea.bg}">` +
+      `<div class="post-media-emoji">${idea.emoji}</div>` +
+      `<div class="post-media-headline">${headline}</div>` +
+      `<div class="post-pop-heart">❤️</div>` +
+    `</div>` +
+    `<div class="post-actions"><span>❤️</span><span>💬</span><span>↗</span><span class="spacer"></span><span>🔖</span></div>` +
+    `<div class="post-likes" id="post-likes">0 j'aime</div>` +
+    `<div class="post-caption"><b>${handle}</b> ${idea.cap} <span class="tags">${tagsFor(campaign)}</span></div>` +
+    `<div class="post-foot"><span>🎯 ${cible.label}</span><span>📣 ${canal.name}</span><span>💡 ${campaign.idee.label}</span></div>`;
+
+  $('#res-verdict').innerHTML =
+    `<div class="stars">${'★'.repeat(verdict.stars)}${'☆'.repeat(5 - verdict.stars)}</div>` +
+    `<div class="vtext">${verdict.text}</div>`;
+
+  dom.challenge.classList.add('hidden');
+  dom.win.classList.add('hidden');
+  dom.result.classList.remove('hidden');
+
+  countUp($('#post-likes'), likesTarget, 1600, (n) => n.toLocaleString('fr-FR') + ' j\'aime');
+  popHeart($('#post-card').querySelector('.post-pop-heart'));
+  sfx.trend();
+}
+
+function tagsFor(c) {
+  return [c.cible.tag, '#nouveauté', '#' + c.canal.canal, c.idee.idea === 'fomo' ? '#drop' : '#trend'].join(' ');
+}
+function computeVerdict() {
+  const sum = (campaign.cible.fit || 0) + (campaign.idee.fit || 0) + (campaign.canal.fit || 0) + (campaign.final.fit || 0);
+  const score = Math.round(clamp(sum / 112, 0, 1) * 100);  // 112 = somme des meilleurs « fit »
+  let stars = 3, text = '🙂 Pas mal — il y a de l\'idée, on peaufine au prochain brief !';
+  if (score >= 85) { stars = 5; text = '🔥 Brief parfaitement compris — campagne au top !'; }
+  else if (score >= 72) { stars = 4; text = '👍 Solide ! Ta campagne tient clairement la route.'; }
+  return { score, stars, text };
+}
+function popHeart(el) {
+  if (!el || !el.animate) return;
+  el.animate([
+    { opacity: 0, transform: 'translate(-50%,0) scale(.4)' },
+    { opacity: 1, transform: 'translate(-50%,-30px) scale(1.4)' },
+    { opacity: 0, transform: 'translate(-50%,-80px) scale(1)' },
+  ], { duration: 1200, easing: 'ease-out' });
 }
 
 // ============================================================
@@ -409,6 +613,9 @@ function update(dt) {
       obstacles.splice(i, 1);
     }
   }
+
+  // --- Victoire : objectif followers atteint ---
+  if (followers >= WIN_GOAL) { winGame(); return; }
 
   // --- Particules & popups ---
   updateParticles(dt);

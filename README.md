@@ -9,6 +9,14 @@ et célèbre les paliers (100, 250, 500… followers).
 Quand le temps est écoulé, le compteur de followers se fige : **c'est ton score = ton XP** —
 que tu peux ensuite **partager** en un clic.
 
+**Victoire & Défi Campagne.** Atteindre **2000 followers** déclenche la victoire et débloque
+le **Défi Campagne** : un brief unique (« lancer un nouveau produit auprès des jeunes ») et
+4 choix guidés par cartes (cible → idée → canal → créateur/message). À la fin, la campagne
+s'affiche sous forme d'un **faux post social animé** construit à partir des choix, avec un
+verdict en étoiles. *(Astuce démo : depuis le menu/fin, la touche `C` ouvre directement le défi.)*
+
+Le jeu est **jouable sur mobile** (tactile, mise en page responsive : cartes empilées, défi en grille adaptative).
+
 ## Deux parcours
 
 | Parcours | Profil | Esprit |

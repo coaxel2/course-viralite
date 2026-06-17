@@ -91,6 +91,7 @@
         <span class="dot">•</span>
         <span>Relâcher → descendre</span>
       </div>
+      <p class="rotate-hint">📱 Astuce : tourne ton téléphone en <b>paysage</b> pour plus de confort</p>
 
       <a class="filiere-link" href="https://www.ynov.com/formations/marketing-communication" target="_blank" rel="noopener">
         Un jeu aux couleurs de la formation <strong>Marketing &amp; Communication</strong> · Ynov ↗
@@ -113,6 +114,7 @@
         <div class="over-stat"><span id="over-parcours">—</span><small>🎮 parcours</small></div>
       </div>
       <div class="over-newbest hidden" id="over-newbest">🎉 Nouveau record !</div>
+      <div class="over-locked" id="over-locked">🔒 Atteins <b>2000 followers</b> pour débloquer le <b>Défi Campagne</b></div>
       <div class="over-actions">
         <button class="btn btn-primary" id="btn-replay">↻ Rejouer</button>
         <button class="btn btn-share" id="btn-share">📤 Partager</button>
@@ -121,6 +123,49 @@
       <a class="over-filiere" href="https://www.ynov.com/formations/marketing-communication" target="_blank" rel="noopener" title="Formation Marketing &amp; Communication — Ynov">
         <img src="logo-ynov.svg" alt="Ynov — Marketing &amp; Communication">
       </a>
+    </div>
+  </div>
+
+  <!-- Écran VICTOIRE (2000 followers atteints) -->
+  <div id="screen-win" class="screen hidden">
+    <div class="win-inner">
+      <div class="win-trophy">🏆</div>
+      <div class="win-kicker">MISSION RÉUSSIE</div>
+      <h2 class="win-title">Tu es devenu·e <span>VIRAL</span> !</h2>
+      <p class="win-sub">Tu as dépassé les <b>2000 followers</b>. Tu rejoins les créateurs qui passent à l'étape supérieure…</p>
+      <div class="win-score"><span id="win-score">2000</span><small>followers · XP gagné</small></div>
+      <button class="btn btn-primary btn-lg" id="btn-challenge">🎯 Relever le Défi Campagne →</button>
+      <div class="win-actions">
+        <button class="btn btn-ghost" id="btn-win-replay">↻ Rejouer</button>
+        <button class="btn btn-ghost" id="btn-win-menu">‹ Parcours</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Écran CHALLENGE — Défi Campagne (choix de cartes) -->
+  <div id="screen-challenge" class="screen hidden">
+    <div class="ch-inner">
+      <div class="ch-brief">
+        <span class="ch-brief-tag">📋 LE BRIEF</span>
+        <p id="ch-brief-text">Lancer un nouveau produit auprès des jeunes.</p>
+      </div>
+      <div class="ch-progress" id="ch-progress"></div>
+      <h3 class="ch-step-title" id="ch-step-title"></h3>
+      <p class="ch-step-q" id="ch-step-q"></p>
+      <div class="ch-cards" id="ch-cards"></div>
+    </div>
+  </div>
+
+  <!-- Écran RÉSULTAT — la campagne générée (faux post animé) -->
+  <div id="screen-result" class="screen hidden">
+    <div class="res-inner">
+      <div class="res-headline">🎉 Ta campagne est en ligne !</div>
+      <div class="post-card" id="post-card"></div>
+      <div class="res-verdict" id="res-verdict"></div>
+      <div class="res-actions">
+        <button class="btn btn-primary" id="btn-res-replay">↻ Rejouer la mission</button>
+        <button class="btn btn-ghost" id="btn-res-menu">‹ Menu</button>
+      </div>
     </div>
   </div>
 </div>
