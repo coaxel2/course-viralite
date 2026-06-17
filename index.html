@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 <div id="game-root">
@@ -132,8 +132,17 @@
       <div class="win-trophy">🏆</div>
       <div class="win-kicker">MISSION RÉUSSIE</div>
       <h2 class="win-title">Tu es devenu·e <span>VIRAL</span> !</h2>
-      <p class="win-sub">Tu as dépassé les <b>2000 followers</b>. Tu rejoins les créateurs qui passent à l'étape supérieure…</p>
-      <div class="win-score"><span id="win-score">2000</span><small>followers · XP gagné</small></div>
+      <p class="win-sub">Tu as dépassé les <b>2000 followers</b> — et la vitesse compte !</p>
+      <div class="win-stats">
+        <div class="win-stat"><span id="win-score">2000</span><small>followers · XP</small></div>
+        <div class="win-stat win-stat-time"><span id="win-time">—</span><small>⚡ pour 2000 abonnés</small></div>
+      </div>
+      <div class="win-record hidden" id="win-record">🏅 Nouveau record de vitesse !</div>
+      <div class="leaderboard">
+        <div class="lb-title">🏁 Classement mondial · les plus rapides</div>
+        <div class="lb-rows" id="lb-rows"></div>
+        <div class="lb-caption" id="lb-caption"></div>
+      </div>
       <button class="btn btn-primary btn-lg" id="btn-challenge">🎯 Relever le Défi Campagne →</button>
       <div class="win-actions">
         <button class="btn btn-ghost" id="btn-win-replay">↻ Rejouer</button>
@@ -170,6 +179,6 @@
   </div>
 </div>
 
-<script src="game.js?v=3"></script>
+<script src="game.js?v=4"></script>
 </body>
 </html>

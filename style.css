@@ -183,6 +183,7 @@ kbd{background:rgba(255,255,255,.1); border:1px solid var(--glass-brd); border-b
   animation:trendpulse .8s ease infinite;
 }
 @keyframes trendpulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.06)}}
+@keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 
 /* Badge de série (combo) */
 .combo-badge{
@@ -232,7 +233,7 @@ kbd{background:rgba(255,255,255,.1); border:1px solid var(--glass-brd); border-b
 .over-newbest{
   display:inline-block; margin-bottom:16px; font-weight:800; color:#3a1500;
   background:linear-gradient(100deg,var(--gold),var(--pink-soft)); padding:.45em 1.1em; border-radius:12px;
-  animation:trendpulse 1s ease infinite;
+  animation:badgePulse 1s ease infinite;
 }
 .over-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
 .over-filiere{display:inline-flex; margin-top:24px; background:#fdfaf5; border-radius:13px; padding:9px 16px; box-shadow:0 12px 28px -16px rgba(216,116,59,.7); transition:transform .18s ease;}
@@ -272,12 +273,40 @@ kbd{background:rgba(255,255,255,.1); border:1px solid var(--glass-brd); border-b
 }
 .win-sub{color:var(--muted); max-width:440px; margin:.6em auto 0; line-height:1.5;}
 .win-sub b{color:var(--text);}
-.win-score{margin:18px 0; display:flex; flex-direction:column; align-items:center;}
-.win-score span{
-  font-size:clamp(3rem,12vw,5rem); font-weight:900; font-variant-numeric:tabular-nums; line-height:.9;
+.win-stats{display:flex; gap:12px; justify-content:center; margin:18px 0 12px;}
+.win-stat{
+  flex:1 1 0; max-width:200px; background:var(--glass); border:1px solid var(--glass-brd); border-radius:16px;
+  padding:14px 10px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+}
+.win-stat span{
+  display:block; font-size:clamp(2rem,8vw,3.1rem); font-weight:900; font-variant-numeric:tabular-nums; line-height:.95;
   background:linear-gradient(100deg,var(--gold),var(--brand)); -webkit-background-clip:text; background-clip:text; color:transparent;
 }
-.win-score small{letter-spacing:.14em; font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; margin-top:.4em;}
+.win-stat-time span{background-image:linear-gradient(100deg,var(--cyan),var(--brand-light));}
+.win-stat small{display:block; letter-spacing:.1em; font-size:.66rem; font-weight:700; color:var(--muted); text-transform:uppercase; margin-top:.5em;}
+.win-record{display:inline-block; margin-bottom:14px; font-weight:800; color:#3a1500; background:linear-gradient(100deg,var(--gold),var(--brand-light)); padding:.4em 1em; border-radius:12px; animation:badgePulse 1s ease infinite;}
+
+/* Classement mondial fictif (speedrun) */
+.leaderboard{
+  background:var(--glass); border:1px solid var(--glass-brd); border-radius:18px;
+  padding:14px 12px; margin-bottom:20px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+}
+.lb-title{font-size:.78rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--brand-light); margin-bottom:10px;}
+.lb-rows{display:flex; flex-direction:column; gap:5px;}
+.lb-row{
+  display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:11px;
+  background:rgba(255,255,255,.04); font-size:.95rem;
+}
+.lb-row.me{
+  background:linear-gradient(100deg,rgba(216,116,59,.32),rgba(255,61,139,.22));
+  border:1px solid rgba(240,147,74,.6); font-weight:800;
+  box-shadow:0 0 0 3px rgba(216,116,59,.18); animation:bump .4s ease;
+}
+.lb-pos{flex:0 0 34px; text-align:center; font-weight:800; font-variant-numeric:tabular-nums;}
+.lb-name{flex:1; text-align:left; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.lb-time{font-variant-numeric:tabular-nums; font-weight:800; color:var(--text);}
+.lb-gap{text-align:center; color:var(--muted); font-size:1rem; line-height:.6; letter-spacing:2px;}
+.lb-caption{margin-top:12px; font-size:.92rem; font-weight:700; color:#ece4ff;}
 .btn-lg{font-size:1.15rem; padding:1em 1.8em; animation:ctaPulse 1.8s ease infinite;}
 @keyframes ctaPulse{0%,100%{transform:scale(1); box-shadow:0 16px 34px -16px var(--brand)}50%{transform:scale(1.035); box-shadow:0 22px 44px -16px var(--brand)}}
 .win-actions{display:flex; gap:12px; justify-content:center; margin-top:18px;}
@@ -351,6 +380,9 @@ kbd{background:rgba(255,255,255,.1); border:1px solid var(--glass-brd); border-b
 @media (max-width:560px){
   .screen{padding:18px 14px;}
   .cards{gap:14px;}
+  .win-stats{flex-direction:column; align-items:center;}
+  .win-stat{width:100%; max-width:260px;}
+  .win-stat span{font-size:clamp(2rem,14vw,3rem);}
   .over-actions,.res-actions,.win-actions{flex-direction:column;}
   .over-actions .btn,.res-actions .btn,.win-actions .btn{width:100%;}
   .ch-cards{grid-template-columns:1fr 1fr; gap:10px;}

@@ -17,6 +17,18 @@ const CEIL_Y = 30;             // plafond jouable
 const FLOOR_Y = LOGH - 54;     // sol jouable (au-dessus de la bande de rue)
 const GAME_URL = 'https://coaxel2.github.io/course-viralite/';
 const WIN_GOAL = 2000;         // followers à atteindre pour gagner + débloquer le Défi Campagne
+// Classement mondial fictif (temps pour atteindre 2000 followers) — le joueur s'y insère
+const RIVALS = [
+  { name: '@maya.viral',  t: 23.4 },
+  { name: 'ThéoCreates',  t: 26.9 },
+  { name: '@lina.mkg',    t: 30.5 },
+  { name: 'BuzzKevin',    t: 34.2 },
+  { name: '@sofia.trend', t: 37.8 },
+  { name: 'NoaDigital',   t: 41.3 },
+  { name: '@emma.pop',    t: 45.0 },
+  { name: 'LucasOnAir',   t: 48.7 },
+  { name: '@chloé.snap',  t: 52.6 },
+];
 
 // ---------- Configuration des deux parcours ----------
 // Physique identique (mêmes sensations) ; on fait varier vitesse, densité,
@@ -118,6 +130,7 @@ let followers, followersShown, likesRun, timeLeft, elapsed, worldSpeed;
 let trendTimer, comboFx;
 let combo, comboMult, comboTimer, milestoneIdx, maxCombo;
 let challengeStep, campaign;
+let winTime;
 let spawnGoodT, spawnBadT, spawnTrendT;
 let shake, flashGood, flashBad, hintT, countdownT, streetOffset;
 let bestKey, isNewBest;
@@ -276,7 +289,7 @@ function startGame(id) {
   timeLeft = cfg.duration; elapsed = 0;
   worldSpeed = cfg.baseSpeed;
   trendTimer = 0; comboFx = 0;
-  combo = 0; comboMult = 1; comboTimer = 0; milestoneIdx = 0; maxCombo = 1;
+  combo = 0; comboMult = 1; comboTimer = 0; milestoneIdx = 0; maxCombo = 1; winTime = 0;
   shake = 0; flashGood = 0; flashBad = 0; streetOffset = 0;
   isNewBest = false;
   collectibles = []; obstacles = []; particles = []; popups = [];
@@ -346,13 +359,60 @@ function countUp(el, target, dur, fmt) {
 function winGame() {
   state = 'win';
   input.down = false;
+  winTime = elapsed;                          // temps mis pour atteindre 2000 followers
   followers = Math.max(followers, WIN_GOAL);
   const best = parseInt(localStorage.getItem(bestKey) || '0', 10);
   if (followers > best) localStorage.setItem(bestKey, String(followers));
+  // Record de vitesse (le plus petit temps) par parcours
+  const btKey = 'viral_btime_' + cfg.id;
+  const prevBT = parseFloat(localStorage.getItem(btKey) || 'Infinity');
+  const isSpeedRecord = winTime < prevBT;
+  if (isSpeedRecord) localStorage.setItem(btKey, String(winTime));
   sfx.trend();
+
+  $('#win-score').textContent = followers.toLocaleString('fr-FR');
+  $('#win-time').textContent = formatTime(winTime);
+  $('#win-record').classList.toggle('hidden', !isSpeedRecord);
+  renderLeaderboard(winTime);
+
   dom.hud.classList.add('hidden');
   dom.win.classList.remove('hidden');
-  countUp($('#win-score'), followers, 1200, (n) => n.toLocaleString('fr-FR'));
+}
+
+function formatTime(s) { return s.toFixed(1).replace('.', ',') + ' s'; }
+
+function renderLeaderboard(pt) {
+  const all = RIVALS.map((r) => ({ name: r.name, t: r.t, me: false }));
+  all.push({ name: 'TOI', t: pt, me: true });
+  all.sort((a, b) => a.t - b.t);
+  const meIdx = all.findIndex((e) => e.me);
+  const rank = meIdx + 1, total = all.length;
+
+  // Fenêtre d'affichage : podium (top 3) + voisins du joueur
+  const show = new Set([0, 1, 2, meIdx - 1, meIdx, meIdx + 1]);
+  const idxs = [...show].filter((i) => i >= 0 && i < total).sort((a, b) => a - b);
+  const medals = ['🥇', '🥈', '🥉'];
+  let html = '', prev = -1;
+  idxs.forEach((i) => {
+    if (prev >= 0 && i > prev + 1) html += '<div class="lb-gap">⋯</div>';
+    const e = all[i];
+    const pos = medals[i] || ('#' + (i + 1));
+    html += `<div class="lb-row${e.me ? ' me' : ''}">` +
+      `<span class="lb-pos">${pos}</span>` +
+      `<span class="lb-name">${e.me ? '⭐ TOI' : e.name}</span>` +
+      `<span class="lb-time">${formatTime(e.t)}</span>` +
+    '</div>';
+    prev = i;
+  });
+  $('#lb-rows').innerHTML = html;
+  $('#lb-caption').textContent = `Tu es ${rank}ᵉ sur ${total} — ${rankComment(rank, total)}`;
+}
+
+function rankComment(rank, total) {
+  if (rank === 1) return 'le plus rapide du monde ! 🔥';
+  if (rank <= 3) return 'sur le podium ! 🏅';
+  if (rank <= total / 2) return 'beau temps, continue !';
+  return 'rejoue pour grimper au classement !';
 }
 
 // ============================================================
