@@ -260,9 +260,7 @@ function init() {
 function resize() {
   const root = $('#game-root');
   const maxW = root.clientWidth, maxH = root.clientHeight;
-  const aspect = LOGW / LOGH;
-  let w = maxW, h = w / aspect;
-  if (h > maxH) { h = maxH; w = h * aspect; }
+  const w = maxW, h = maxH;
   const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   canvas.style.width = w + 'px';
   canvas.style.height = h + 'px';
