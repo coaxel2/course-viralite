@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#120a24">
+<title>La Course à la Viralité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="game-root">
+  <canvas id="game"></canvas>
+
+  <!-- Bouton son (toujours visible) -->
+  <button id="mute-btn" class="mute-btn" title="Activer / couper le son (M)">🔊</button>
+
+  <!-- HUD en jeu -->
+  <div id="hud" class="hud hidden">
+    <div class="hud-left">
+      <div class="stat stat-followers">
+        <span class="stat-icon">👥</span>
+        <span class="stat-val" id="hud-followers">0</span>
+        <span class="stat-label">followers</span>
+      </div>
+      <div class="stat stat-likes">
+        <span class="stat-icon">❤️</span>
+        <span class="stat-val" id="hud-likes">0</span>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="timer" id="hud-timer">
+        <span class="timer-val" id="hud-time">60</span>
+        <span class="timer-label">sec</span>
+      </div>
+    </div>
+    <div class="trend-banner hidden" id="trend-banner">🔥 TENDANCE × 2 🔥</div>
+  </div>
+
+  <!-- Écran menu -->
+  <div id="screen-menu" class="screen">
+    <div class="menu-inner">
+      <div class="brand">
+        <div class="brand-kicker">UN JEU POUR DEVENIR</div>
+        <h1 class="brand-title">VIRAL<span class="brand-dot">.</span></h1>
+        <p class="brand-sub">Lâché·e dans la ville numérique, ton avatar avance tout seul.
+          <strong>Maintiens</strong> pour t'envoler, attrape les bonnes ondes, esquive les bad buzz.</p>
+      </div>
+
+      <div class="cards">
+        <button class="card card-1" data-parcours="1">
+          <div class="card-tag">PARCOURS 1</div>
+          <h2 class="card-title">Découverte</h2>
+          <div class="card-profile">Post-Bac · 1<sup>re</sup> année</div>
+          <p class="card-desc">Mode rassurant et guidé. Le rythme est posé, les pénalités allégées : parfait pour sentir le jeu et prendre confiance.</p>
+          <ul class="card-feats">
+            <li>⏱️ Tempo tranquille</li>
+            <li>🛟 Erreurs pardonnées</li>
+            <li>🧭 Conseils en jeu</li>
+          </ul>
+          <div class="card-best">Meilleur score : <span data-best="1">—</span> XP</div>
+          <span class="card-cta">Jouer ▸</span>
+        </button>
+
+        <button class="card card-2" data-parcours="2">
+          <div class="card-tag">PARCOURS 2</div>
+          <h2 class="card-title">Maîtrise</h2>
+          <div class="card-profile">3<sup>e</sup> année · admission parallèle</div>
+          <p class="card-desc">Mode exigeant et valorisant. Ça va vite, ça spawn dense, les bad buzz piquent — mais chaque like rapporte davantage.</p>
+          <ul class="card-feats">
+            <li>⚡ Rythme nerveux</li>
+            <li>💥 Pénalités réelles</li>
+            <li>💎 Récompenses +20 %</li>
+          </ul>
+          <div class="card-best">Meilleur score : <span data-best="2">—</span> XP</div>
+          <span class="card-cta">Jouer ▸</span>
+        </button>
+      </div>
+
+      <div class="controls-hint">
+        <span><kbd>Maintenir</kbd> clic / doigt / <kbd>Espace</kbd> → monter</span>
+        <span class="dot">•</span>
+        <span>Relâcher → descendre</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Écran fin de partie -->
+  <div id="screen-gameover" class="screen hidden">
+    <div class="over-inner">
+      <div class="over-kicker">⏱️ TEMPS ÉCOULÉ</div>
+      <div class="over-score">
+        <span class="over-score-val" id="over-score">0</span>
+        <span class="over-score-label">followers · XP gagné</span>
+      </div>
+      <div class="over-rank" id="over-rank">—</div>
+      <div class="over-stats">
+        <div class="over-stat"><span id="over-likes">0</span><small>❤️ likes</small></div>
+        <div class="over-stat"><span id="over-best">0</span><small>🏆 record</small></div>
+        <div class="over-stat"><span id="over-parcours">—</span><small>🎮 parcours</small></div>
+      </div>
+      <div class="over-newbest hidden" id="over-newbest">🎉 Nouveau record !</div>
+      <div class="over-actions">
+        <button class="btn btn-primary" id="btn-replay">↻ Rejouer</button>
+        <button class="btn btn-ghost" id="btn-menu">‹ Parcours</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
